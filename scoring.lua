@@ -1,0 +1,3 @@
+local Score = {}
+
+return Score
