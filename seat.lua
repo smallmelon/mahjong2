@@ -16,18 +16,29 @@ function Seat:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
+    o.players = {}
+    o.point = {}
     return o
+end
+
+
+function Seat:show()
+    print("bankerUid ", self.bankerUid)
+    for v, k in pairs(self.players) do
+        k:show()
+    end
+    print("lastAction: ")
+    print_r(self.lastAction)
 end
 
 -- xipai -- 
 function Seat:shuffle()
     self.bankerUid = 1
     local banker, player, pool = Card:shuffle()
-    cardPool = pool
+    self.cardPool = pool
     local p = Player:new({uid = 1})
     p:setHandCards(banker)
     self.players[self.bankerUid] = p
-    -- player
     p = Player:new({uid = 2})
     p:setHandCards(player)
     self.players[2] = p
@@ -84,7 +95,7 @@ end
 
 function Seat:isPongkong(uid)
     local player = self.players[uid]
-    return players:isPongkong(self.lastAction.cards[1])
+    return player:isPongkong(self.lastAction.cards[1])
 end
 
 function Seat:chow(uid, cards)
@@ -132,8 +143,9 @@ function Seat:chowkong(uid)
     self.lastAction = {uid = uid, action = Action.CHOWKONG, cards = {card}}
 end
 
-function Seat:pongkong(uid, card)
+function Seat:pongkong(uid)
     local player = self.players[uid]
+    local card = self.lastAction.cards[1]
     player:pongkong(card)
     self.lastAction = {uid = uid, action = Action.PONGKONG, cards = {card}}
 end
@@ -180,7 +192,7 @@ function Seat:nextAction( )
     local num = player:handCardsNum()
     if num % 3 == 2 then --下一个动作该谁来做
         uid = self.lastAction.uid
-        if self.lastAction.action ~= Action.CHOW and self.lastAction.action ~= self.Action.PONG  then
+        if self.lastAction.action ~= Action.CHOW and self.lastAction.action ~= Action.PONG  then
             if self:isHu(uid) then --  
                 table.insert(actions, Action.DRAWHU)
                 if self.lastAction.action == Action.KONGDRAW then
@@ -203,7 +215,8 @@ function Seat:nextAction( )
         if b then
             table.insert(actions, Action.CONCEALED)
         end
-        if self:isPongkong(uid) then
+        b, willCards = self:isPongkong(uid)
+        if b then
             table.insert(actions, Action.PONGKONG)
         end
         table.insert(actions, Action.POP)

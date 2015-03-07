@@ -15,7 +15,6 @@ function Control:new(o)
 end
 
 function Control:shuffle()
-    print_r(self.seat)
     self.seat:shuffle()
 end
 
@@ -32,7 +31,6 @@ function Control:preAction(actions)
             table.insert(second, v)
         end
     end
-    print_r({first = first, second = choice, third = third})
     return first, second, third
 end
 
@@ -70,58 +68,90 @@ function Control:first( uid, first, second, third)
             return
         end
     end
-    self:second(uid, second, third)
+    if next(second) then
+        self:second(uid, second, third)
+    else 
+        self:third(uid, third)
+    end
 end
 
 function Control:second(uid, second, third)
-    print_r(second)
     print('second choice:')
+    print_r(second)
     local action = io.read("*number")
     if action == Action.CONCEALED then
-        local b , willCards = self.seat:isConcealed(uid)
-        print_r(willCards)
-        print("select concealed : ")
+        print("select concealed (1) not (0) ")
         local s = io.read("*number")
-        self.seat:concealed(uid, s)
+        if s == 1 then        
+            local b , willCards = self.seat:isConcealed(uid)
+            print("select concealed : ")
+            print_r(willCards)
+            local s = io.read("*number")
+            self.seat:concealed(uid, s)
+            return
+        end
     elseif action == Action.PONGKONG then
         print("select pongkong (1) not (0) ")
         local s = io.read("*number")
         if s == 1 then
-            self.seat:pongkong(uid)
+            local b , willCards = self.seat.isPongkong(uid)
+            print("select pongkong: ")
+            print_r(willCards)
+            local s = io.read("*number")
+            self.seat:pongkong(uid, s)
+            return
         end
     elseif action == Action.PONG then
-        self.seat:pong(uid)
-    elseif action == Action.CHOW then
-        local b, willCards = self:isChow(uid)
-        print("chow willCards ")
-        print_r(willCards)
-        print("uid", uid, "select chow:")
+        print("select pong (1) not (0)")
         local s = io.read("*number")
-        self.seat:chow(uid, willCards[s])
+        if s == 1 then
+            self.seat:pong(uid)
+            return
+        end
+    elseif action == Action.CHOW then
+        print("select chow (1) not (0)")
+        local s = io.read("*number")
+        if s == 1 then        
+            local b, willCards = self.seat:isChow(uid)
+            print("uid", uid, "select chow:")
+            print_r(willCards)
+            local s = io.read("*number")
+            self.seat:chow(uid, willCards[s])
+            return
+        end
     elseif action == Action.CHOWKONG then
-        self.seat:chowkong(uid)
+        print("select chowkong (1) not (0)")
+        local s = io.read("*number")
+        if s == 1 then
+            self.seat:chowkong(uid)
+            return
+        end
     end
     self:third(uid, third)
 end
 
 function Control:third(uid,  third)
-    if thrid == Action.DRAW then
+    print("uid ", uid, "action", third, Action.POP)
+    if third == Action.DRAW then
         print("uid ", uid, "want draw card")
         local s = io.read("*number")
         self.seat:draw(uid, s)
-    elseif thrid == Action.POP then
+    elseif third == Action.POP then
         print("uid", uid, "want pop card")
         local s = io.read("*number")
         self.seat:pop(uid, s)
+    else
+        os.exit(0)
     end
 end
 
 function Control:run()
+    self.seat:show()
     local uid, actions = self.seat:nextAction()
     print("uid ", uid, "actions")
+    print_r(actions)
     local first, second, third = self:preAction(actions)
     self:first(uid, first, second, third)
-    -- is robot just do robot next action
     self:run() -- run forever
 end
 

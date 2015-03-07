@@ -17,11 +17,20 @@ function Player:new(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
+    o.handCards = {0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0}
+    o.outCards = {} 
+    o.paired = {}
+    willCards = {}
     return o
 end
 
 function Player:show()
-    print("uid: ", uid, "handCards:")
+    print("uid: ", self.uid, "handCards:")
+    print_r(self.handCards)
+    print("outCards:")
+    print_r(self.outCards)
+    print("paired")
+    print_r(self.paired)
 end
 
 function Player:setLastOutCardsAction(action)
@@ -44,20 +53,21 @@ function Player:handCardsNum( )
 end
 
 function Player:isChow(card)
-        if card > 9 then -- zi
-            return false
-        end
-        local will = {}
-        if card > 2 and self.handCards[card - 1] > 0 and self.handCards[card - 2] > 0 then
-            table.insert(will, {card -1, card - 2})
-        end
-        if card > 1 and card < 9 and self.handCards[card- 1] > 0 and self.handCards[card + 1] > 0 then
-            table.insert(will, {card -1, card + 1})
-        end
-        if card > 8 and self.handCards[card + 1] > 0 and self.handCards[card + 2] > 0 then
-            table.insert(will, {card +1 , card + 2})
-        end
-        return #will > 0, will
+    print("uid", self.uid, "isChow", "card", card)
+    if card > 9 then -- zi
+        return false
+    end
+    local will = {}
+    if card > 2 and self.handCards[card - 1] > 0 and self.handCards[card - 2] > 0 then
+        table.insert(will, {card -1, card - 2})
+    end
+    if card > 1 and card < 9 and self.handCards[card- 1] > 0 and self.handCards[card + 1] > 0 then
+        table.insert(will, {card -1, card + 1})
+    end
+    if card > 8 and self.handCards[card + 1] > 0 and self.handCards[card + 2] > 0 then
+        table.insert(will, {card +1 , card + 2})
+    end
+    return #will > 0, will
 end
 
 function Player:isPong(card)
@@ -84,14 +94,16 @@ function Player:isConcealed()
     return #will > 0 , will
 end
 
-function Player:isPongkong(card)
-        for i = 1, #self.paired do 
-            local pair = self.paired[i]
-            if pair.action == Action.PONG and pair.cards[1] == card then
-                return true
-            end
+--TODO 应该拿手上的牌去遍历，pong的牌吗？
+function Player:isPongkong()
+    local willCards = {}
+    for i = 1, #self.paired do 
+        local pair = self.paired[i]
+        if pair.action == Action.PONG and self.handCards[pair.cards[1]] == 1 then
+             table.insert(willCards, pair.cards[1])
         end
-        return false
+    end
+    return #willCards > 0, willCards
 end
 
 function Player:isHu()
@@ -140,6 +152,7 @@ function Player:chowkong( card)
 end
 
 function Player:pongkong(card)
+    self.handCards[card] = 0
     for k, v in pairs(self.paired) do
         if v.action == Action.PONG and v.cards[1] == card then
             v.action = Action.PONGKONG 
