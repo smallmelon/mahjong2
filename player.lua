@@ -170,7 +170,9 @@ function Player:ting(card, willCards)
     self.willCards = willCards 
     self.bTing = true
 end
-
+function Player:isAlreadyTing()
+    return bTing
+end
 function Player:chowhu( card)
     -- body
 end

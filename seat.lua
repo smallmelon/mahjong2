@@ -73,6 +73,11 @@ function Seat:isTing( uid )
     return player:isTing()
 end
 
+function Seat:isAlreadyTing(uid)
+    local player = self.players[uid]
+    return player:isAlreadyTing(uid)
+end
+
 function Seat:isConcealed( uid )
     local player =self.players[uid]
     return player:isConcealed()
@@ -198,26 +203,28 @@ function Seat:nextAction( )
                 if self.lastAction.action == Action.KONGDRAW then
                     actions[1] = Action.KONGHU
                 end
-            else 
+            elseif not self:isAlreadyTing(uid) then 
                 local b, willCards = self:isTing(uid)
                 if b then
                     table.insert(actions, Action.TING)
                 end
             end
-        else 
+        elseif not self:isAlreadyTing(uid) then 
             local b, willCards = self:isTing(uid)
             if b then 
                 table.insert(actions, Action.TING)
             end
         end
-
-        local b, willCards = self:isConcealed(uid)
-        if b then
-            table.insert(actions, Action.CONCEALED)
-        end
-        b, willCards = self:isPongkong(uid)
-        if b then
-            table.insert(actions, Action.PONGKONG)
+        
+        if not self:isAlreadyTing(uid) then
+            local b, willCards = self:isConcealed(uid)
+            if b then
+                table.insert(actions, Action.CONCEALED)
+            end
+            b, willCards = self:isPongkong(uid)
+            if b then
+                table.insert(actions, Action.PONGKONG)
+            end
         end
         table.insert(actions, Action.POP)
     else
@@ -229,19 +236,23 @@ function Seat:nextAction( )
             if self:isChowhu(uid) then
                 table.insert(actions, Action.CHOWHU)
             end
-            local b, willCards = self:isChow(uid)
-            if b then
-                table.insert(actions, Action.CHOW)
-            end
-            if self:isPong(uid) then
-                table.insert(actions, Action.PONG)
-            end
-            if self:isChowkong(uid) then
-                table.insert(actions, Action.CHOWKONG)
+            if not self:isAlreadyTing(uid) then 
+                local b, willCards = self:isChow(uid)
+                if b then
+                    table.insert(actions, Action.CHOW)
+                end
+                if self:isPong(uid) then
+                    table.insert(actions, Action.PONG)
+                end
+                if self:isChowkong(uid) then
+                    table.insert(actions, Action.CHOWKONG)
+                end
             end
             table.insert(actions, Action.DRAW)
         end
     end
+
+    -- filter
     return uid, actions
 end
 
